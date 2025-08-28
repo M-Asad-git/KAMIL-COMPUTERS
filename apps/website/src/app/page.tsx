@@ -87,7 +87,7 @@ export default function HomePage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="🔍 What are you looking for today?"
+                    placeholder="🔍 Search laptops, desktops, accessories, or specific products..."
                     className="w-full px-4 md:px-6 py-3 md:py-4 pr-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:bg-white/20 text-sm md:text-base transition-all duration-300 group-hover:bg-white/15 group-hover:border-white/30"
                   />
                   <button

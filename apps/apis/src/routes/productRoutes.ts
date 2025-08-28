@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addProduct, updateProduct, removeProduct, searchProductsByCategory } from '../controllers/productController';
+import { addProduct, updateProduct, removeProduct, searchProductsByCategory, getProductById } from '../controllers/productController';
 import { verifyAdmin } from '../middleware/auth';
 
 const router = Router();
@@ -16,6 +16,7 @@ router.post('/admin/login', (req, res) => {
 
 // Product Routes
 router.get('/products', searchProductsByCategory); // Search by category or name
+router.get('/products/:id', getProductById); // Get single product by ID
 router.post('/products', verifyAdmin, addProduct); // Admin-only
 router.put('/products/:id', verifyAdmin, updateProduct); // Admin-only
 router.delete('/products/:id', verifyAdmin, removeProduct); // Admin-only

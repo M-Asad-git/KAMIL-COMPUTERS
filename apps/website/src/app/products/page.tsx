@@ -1,110 +1,33 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
-import Image from "next/image";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+// Simple Product type that matches your database
 type Product = {
-  id: number;
+  id: string;
   name: string;
   category: string;
+  description: string;
   price: number;
   images: string[];
-  description: string;
+  stock?: number;
 };
-
-const products: Product[] = [
-  {
-    id: 1,
-    name: "UltraBook Pro 15",
-    category: "Laptops",
-    price: 360000,
-    images: [
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80"
-    ],
-    description: "Premium ultrabook with 15-inch display, perfect for professionals and students."
-  },
-  {
-    id: 2,
-    name: "Gaming Beast X7",
-    category: "Laptops",
-    price: 525000,
-    images: [
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80"
-    ],
-    description: "High-performance gaming laptop with RGB keyboard and powerful graphics."
-  },
-  {
-    id: 3,
-    name: "Everyday Lite 13",
-    category: "Laptops",
-    price: 220000,
-    images: [
-      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80"
-    ],
-    description: "Lightweight and portable laptop ideal for everyday use and productivity."
-  },
-  {
-    id: 4,
-    name: "Pro Desktop Z5",
-    category: "Desktops",
-    price: 440000,
-    images: [
-      "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80"
-    ],
-    description: "Professional desktop workstation for demanding applications and multitasking."
-  },
-  {
-    id: 5,
-    name: "Wireless Mouse X2",
-    category: "Accessories",
-    price: 13500,
-    images: [
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80"
-    ],
-    description: "Ergonomic wireless mouse with precision tracking and long battery life."
-  },
-  {
-    id: 6,
-    name: "Mechanical Keyboard Pro",
-    category: "Accessories",
-    price: 35500,
-    images: [
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80"
-    ],
-    description: "Premium mechanical keyboard with customizable RGB lighting and tactile switches."
-  },
-];
 
 const categories = ["All", "Laptops", "Desktops", "Accessories"];
 
-function ProductCatalogContent() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   const searchParams = useSearchParams();
 
-  // Handle search query from URL parameters
+  // Get search query from URL
   useEffect(() => {
     const searchQuery = searchParams.get('search');
     if (searchQuery) {
@@ -112,13 +35,43 @@ function ProductCatalogContent() {
     }
   }, [searchParams]);
 
+  // Fetch products from your API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        
+        // Simple API call to get products
+        const response = await fetch('http://localhost:4000/api/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // If API fails, show empty state
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Simple filtering logic
   const filteredProducts = products.filter((product) => {
-    const matchesCategory =
-      selectedCategory === "All" || product.category === selectedCategory;
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesSearch = search === "" || 
+      product.name.toLowerCase().includes(search.toLowerCase()) ||
+      product.description.toLowerCase().includes(search.toLowerCase()) ||
+      product.category.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesCategory = selectedCategory === "All" || 
+      product.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
   });
 
   const handleWhatsAppClick = (product: Product) => {
@@ -137,21 +90,20 @@ function ProductCatalogContent() {
     setCurrentImageIndex(0);
   };
 
-  const nextImage = () => {
-    if (selectedProduct) {
-      setCurrentImageIndex((prev) => 
-        prev === selectedProduct.images.length - 1 ? 0 : prev + 1
-      );
-    }
-  };
-
-  const prevImage = () => {
-    if (selectedProduct) {
-      setCurrentImageIndex((prev) => 
-        prev === 0 ? selectedProduct.images.length - 1 : prev - 1
-      );
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 py-8 md:py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 text-center bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            🚀 Our Products
+          </h1>
+          <div className="flex justify-center items-center py-12">
+            <div className="text-lg text-gray-600">Loading products...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 py-8 md:py-12 px-4">
@@ -160,6 +112,7 @@ function ProductCatalogContent() {
           🚀 Our Products
         </h1>
         
+        {/* Simple Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6 md:mb-8 justify-between items-center">
           <input
             type="text"
@@ -181,9 +134,12 @@ function ProductCatalogContent() {
           </select>
         </div>
         
+        {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           {filteredProducts.length === 0 ? (
-            <div className="col-span-full text-center text-gray-600 text-lg">No products found.</div>
+            <div className="col-span-full text-center text-gray-600 text-lg">
+              {search ? 'No products found matching your search.' : 'No products available yet.'}
+            </div>
           ) : (
             filteredProducts.map((product) => (
               <div
@@ -192,11 +148,9 @@ function ProductCatalogContent() {
               >
                 <div className="relative mb-4 group">
                   <div className="relative overflow-hidden rounded-lg md:rounded-xl">
-                    <Image
-                      src={product.images[0]}
+                    <img
+                      src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder-image.svg'}
                       alt={product.name}
-                      width={300}
-                      height={200}
                       className="w-full h-40 md:h-48 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-110"
                       onClick={() => openImageGallery(product)}
                     />
@@ -208,18 +162,6 @@ function ProductCatalogContent() {
                         📸 Click to view gallery
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Image indicators */}
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                    {product.images.slice(0, 4).map((_: string, index: number) => (
-                      <div
-                        key={index}
-                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
-                          index === 0 ? 'bg-white' : 'bg-white/50'
-                        }`}
-                      />
-                    ))}
                   </div>
                   
                   <div className="absolute top-2 right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium shadow-lg">
@@ -256,7 +198,7 @@ function ProductCatalogContent() {
         </div>
       </div>
 
-      {/* Image Gallery Modal */}
+      {/* Simple Image Gallery Modal */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-4">
           <div className="relative max-w-5xl w-full bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-2xl max-h-[95vh]">
@@ -270,45 +212,11 @@ function ProductCatalogContent() {
             </button>
             
             <div className="relative">
-              <Image
-                src={selectedProduct.images[currentImageIndex]}
+              <img
+                src={selectedProduct.images && selectedProduct.images.length > 0 ? selectedProduct.images[currentImageIndex] : '/placeholder-image.svg'}
                 alt={selectedProduct.name}
-                width={800}
-                height={600}
                 className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
               />
-              
-              {/* Navigation arrows */}
-              <button
-                onClick={prevImage}
-                className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 md:p-3 rounded-full hover:bg-black/70 transition-colors"
-              >
-                <svg className="w-4 h-4 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={nextImage}
-                className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 md:p-3 rounded-full hover:bg-black/70 transition-colors"
-              >
-                <svg className="w-4 h-4 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-              
-              {/* Image indicators */}
-              <div className="absolute bottom-2 md:bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1 md:space-x-2">
-                {selectedProduct.images.map((_: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors ${
-                      index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                    }`}
-                  />
-                ))}
-              </div>
             </div>
             
             <div className="p-4 md:p-6 bg-white">
@@ -333,24 +241,5 @@ function ProductCatalogContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function ProductCatalog() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 py-8 md:py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 text-center bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            🚀 Our Products
-          </h1>
-          <div className="flex justify-center items-center py-12">
-            <div className="text-lg text-gray-600">Loading products...</div>
-          </div>
-        </div>
-      </div>
-    }>
-      <ProductCatalogContent />
-    </Suspense>
   );
 }

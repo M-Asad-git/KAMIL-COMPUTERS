@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { apiClient } from '@/lib/api';
 import { Category } from '@/types';
 import { ArrowLeft, Save, Plus, X, Trash2 } from 'lucide-react';
 
-export default function AddProductPage() {
+export default function EditProductPage() {
   const [formData, setFormData] = useState({
     name: '',
     category: '' as Category | '',
@@ -20,9 +20,49 @@ export default function AddProductPage() {
   const [specifications, setSpecifications] = useState<string[]>(['', '', '', '']); // Start with 4 empty specs
   const [newImageUrl, setNewImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState('');
   
   const router = useRouter();
+  const params = useParams();
+  const productId = params.id as string;
+
+  // Fetch existing product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setIsFetching(true);
+        setError('');
+        
+        const product = await apiClient.getProduct(productId);
+        
+        setFormData({
+          name: product.name,
+          category: product.category,
+          description: product.description,
+          price: product.price.toString(),
+          stock: (product.stock ?? 0).toString(), // Fix: Handle optional stock field
+          images: product.images || [],
+        });
+
+        // Parse existing description into specifications
+        if (product.description) {
+          const existingSpecs = product.description.split(',').map(spec => spec.trim());
+          // Ensure we have at least 4 columns, pad with empty strings if needed
+          const paddedSpecs = [...existingSpecs, '', '', '', ''].slice(0, Math.max(4, existingSpecs.length));
+          setSpecifications(paddedSpecs);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch product');
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
+  }, [productId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -97,14 +137,26 @@ export default function AddProductPage() {
         images: formData.images,
       };
 
-      await apiClient.createProduct(productData);
+      await apiClient.updateProduct(productId, productData);
       router.push('/dashboard/products');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create product');
+      setError(err instanceof Error ? err.message : 'Failed to update product');
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isFetching) {
+    return (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <div className="flex justify-center items-center py-12">
+            <div className="text-lg text-gray-600">Loading product...</div>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -119,8 +171,8 @@ export default function AddProductPage() {
               Back
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
-              <p className="text-gray-600">Create a new product for your inventory</p>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+              <p className="text-gray-600">Update product information</p>
             </div>
           </div>
 
@@ -315,7 +367,7 @@ export default function AddProductPage() {
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  {isLoading ? 'Creating...' : 'Create Product'}
+                  {isLoading ? 'Updating...' : 'Update Product'}
                 </button>
               </div>
             </form>

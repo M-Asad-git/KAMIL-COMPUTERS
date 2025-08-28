@@ -82,6 +82,10 @@ class ApiClient {
     return this.request<Product[]>(endpoint);
   }
 
+  async getProduct(id: string): Promise<Product> {
+    return this.request<Product>(`/products/${id}`);
+  }
+
   async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<{ id: string }>> {
     return this.request<ApiResponse<{ id: string }>>('/products', {
       method: 'POST',
