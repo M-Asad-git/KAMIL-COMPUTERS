@@ -26,7 +26,12 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const params: any = {
+      const params: {
+        limit: number;
+        skip: number;
+        name?: string;
+        category?: Category;
+      } = {
         limit: itemsPerPage,
         skip: (currentPage - 1) * itemsPerPage,
       };

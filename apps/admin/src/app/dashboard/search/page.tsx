@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { apiClient } from '@/lib/api';
@@ -21,14 +21,19 @@ export default function SearchPage() {
     if (searchTerm || selectedCategory) {
       performSearch();
     }
-  }, [searchTerm, selectedCategory, priceRange, stockFilter, sortBy, sortOrder]);
+  }, [performSearch]);
 
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
     if (!searchTerm && !selectedCategory) return;
 
     setIsLoading(true);
     try {
-      const params: any = {
+      const params: {
+        limit: number;
+        skip: number;
+        name?: string;
+        category?: Category;
+      } = {
         limit: 100,
         skip: 0,
       };
@@ -60,7 +65,8 @@ export default function SearchPage() {
 
       // Apply sorting
       data.sort((a, b) => {
-        let aValue: any, bValue: any;
+        let aValue: string | number | Date;
+        let bValue: string | number | Date;
         
         switch (sortBy) {
           case 'name':
@@ -97,7 +103,7 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, selectedCategory, priceRange, stockFilter, sortBy, sortOrder]);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -168,7 +174,7 @@ export default function SearchPage() {
                 <select
                   id="stockFilter"
                   value={stockFilter}
-                  onChange={(e) => setStockFilter(e.target.value as any)}
+                  onChange={(e) => setStockFilter(e.target.value as 'all' | 'inStock' | 'lowStock' | 'outOfStock')}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 >
                   <option value="all">All Stock Levels</option>
@@ -185,7 +191,7 @@ export default function SearchPage() {
                 <select
                   id="sortBy"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as 'name' | 'price' | 'stock' | 'created_at')}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 >
                   <option value="name">Name</option>

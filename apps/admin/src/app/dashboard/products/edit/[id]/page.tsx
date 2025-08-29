@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { apiClient } from '@/lib/api';
@@ -329,9 +330,11 @@ export default function EditProductPage() {
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                         {formData.images.map((image, index) => (
                           <div key={index} className="relative group">
-                            <img
+                            <Image
                               src={image}
                               alt={`Product image ${index + 1}`}
+                              width={96}
+                              height={96}
                               className="w-full h-24 object-cover rounded-lg border border-gray-200"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
