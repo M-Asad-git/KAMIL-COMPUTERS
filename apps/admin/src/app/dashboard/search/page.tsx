@@ -17,12 +17,6 @@ export default function SearchPage() {
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'created_at'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  useEffect(() => {
-    if (searchTerm || selectedCategory) {
-      performSearch();
-    }
-  }, [performSearch]);
-
   const performSearch = useCallback(async () => {
     if (!searchTerm && !selectedCategory) return;
 
@@ -104,6 +98,12 @@ export default function SearchPage() {
       setIsLoading(false);
     }
   }, [searchTerm, selectedCategory, priceRange, stockFilter, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (searchTerm || selectedCategory) {
+      performSearch();
+    }
+  }, [performSearch]);
 
   const clearFilters = () => {
     setSearchTerm('');

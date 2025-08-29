@@ -31,10 +31,24 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
     };
+
+    // Add custom headers if provided
+    if (options.headers) {
+      if (Array.isArray(options.headers)) {
+        options.headers.forEach(([key, value]) => {
+          headers[key] = value;
+        });
+      } else if (typeof options.headers === 'object') {
+        Object.entries(options.headers).forEach(([key, value]) => {
+          if (value !== undefined) {
+            headers[key] = value;
+          }
+        });
+      }
+    }
 
     if (this.getToken()) {
       headers.Authorization = `Bearer ${this.getToken()}`;
