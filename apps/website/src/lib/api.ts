@@ -1,6 +1,7 @@
 import { Product } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+// Default to deployed API so production works even if env var missing
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kamil-apis.vercel.app/api';
 
 class WebsiteApiClient {
   private async request<T>(

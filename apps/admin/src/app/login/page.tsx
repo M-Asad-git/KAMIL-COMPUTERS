@@ -120,7 +120,7 @@ export default function LoginPage() {
           <div className="text-center text-xs text-gray-500">
             <p>Default credentials:</p>
             <p>Username: admin</p>
-            <p>Password: adminpass</p>
+            <p>Password: adminpass (also accepts admin123)</p>
           </div>
         </form>
       </div>

@@ -17,14 +17,58 @@ app.use((0, cors_1.default)({
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-        const allowed = new Set([
+        const allowedExact = new Set([
             'http://localhost:3000',
             'http://127.0.0.1:3000',
             'http://localhost:3001',
             'http://127.0.0.1:3001',
             ...configured
         ]);
-        if (!origin || allowed.has(origin))
+        const allowedPatterns = [
+            /^https?:\/\/localhost:(3000|3001)$/,
+            /^https:\/\/.*kamil-admin.*\.vercel\.app$/,
+            /^https:\/\/.*kamil-computers-website.*\.vercel\.app$/,
+            /^https:\/\/kamil-admin\.vercel\.app$/,
+            /^https:\/\/kamil-computers-website\.vercel\.app$/
+        ];
+        if (!origin)
+            return callback(null, true);
+        if (allowedExact.has(origin))
+            return callback(null, true);
+        if (allowedPatterns.some((re) => re.test(origin)))
+            return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+// Explicitly handle preflight requests with the same CORS policy
+app.options('*', (0, cors_1.default)({
+    origin: (origin, callback) => {
+        const configured = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+        const allowedExact = new Set([
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:3001',
+            'http://127.0.0.1:3001',
+            ...configured
+        ]);
+        const allowedPatterns = [
+            /^https?:\/\/localhost:(3000|3001)$/,
+            /^https:\/\/.*kamil-admin.*\.vercel\.app$/,
+            /^https:\/\/.*kamil-computers-website.*\.vercel\.app$/,
+            /^https:\/\/kamil-admin\.vercel\.app$/,
+            /^https:\/\/kamil-computers-website\.vercel\.app$/
+        ];
+        if (!origin)
+            return callback(null, true);
+        if (allowedExact.has(origin))
+            return callback(null, true);
+        if (allowedPatterns.some((re) => re.test(origin)))
             return callback(null, true);
         return callback(new Error('Not allowed by CORS'));
     },

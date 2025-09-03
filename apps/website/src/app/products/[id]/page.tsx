@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { websiteApiClient } from "@/lib/api";
 
 // Simple Product type that matches your database
 type Product = {
@@ -32,14 +33,14 @@ export default function ProductDetails() {
         setLoading(true);
         setError(null);
         
-        // Simple API call to get the specific product
-        const response = await fetch(`http://localhost:4000/api/products/${productId}`);
-        if (!response.ok) {
-          throw new Error('Product not found');
-        }
-        
-        const data = await response.json();
-        setProduct(data);
+        // Use shared API client (respects NEXT_PUBLIC_API_URL)
+        const data: any = await websiteApiClient.getProduct(productId);
+        // Normalize price to number for display compatibility
+        const normalized = {
+          ...data,
+          price: typeof data.price === 'string' ? Number(data.price) : data.price,
+        } as Product;
+        setProduct(normalized);
       } catch (error) {
         console.error('Error fetching product:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch product');

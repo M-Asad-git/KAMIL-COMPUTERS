@@ -15,14 +15,26 @@ app.use(cors({
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    const allowed = new Set([
+
+    const allowedExact = new Set([
       'http://localhost:3000', 
       'http://127.0.0.1:3000',
       'http://localhost:3001',
       'http://127.0.0.1:3001',
       ...configured
     ]);
-    if (!origin || allowed.has(origin)) return callback(null, true);
+
+    const allowedPatterns = [
+      /^https?:\/\/localhost:(3000|3001)$/,
+      /^https:\/\/.*kamil-admin.*\.vercel\.app$/,
+      /^https:\/\/.*kamil-computers-website.*\.vercel\.app$/,
+      /^https:\/\/kamil-admin\.vercel\.app$/,
+      /^https:\/\/kamil-computers-website\.vercel\.app$/
+    ];
+
+    if (!origin) return callback(null, true);
+    if (allowedExact.has(origin)) return callback(null, true);
+    if (allowedPatterns.some((re) => re.test(origin))) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -37,14 +49,26 @@ app.options('*', cors({
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    const allowed = new Set([
+
+    const allowedExact = new Set([
       'http://localhost:3000', 
       'http://127.0.0.1:3000',
       'http://localhost:3001',
       'http://127.0.0.1:3001',
       ...configured
     ]);
-    if (!origin || allowed.has(origin)) return callback(null, true);
+
+    const allowedPatterns = [
+      /^https?:\/\/localhost:(3000|3001)$/,
+      /^https:\/\/.*kamil-admin.*\.vercel\.app$/,
+      /^https:\/\/.*kamil-computers-website.*\.vercel\.app$/,
+      /^https:\/\/kamil-admin\.vercel\.app$/,
+      /^https:\/\/kamil-computers-website\.vercel\.app$/
+    ];
+
+    if (!origin) return callback(null, true);
+    if (allowedExact.has(origin)) return callback(null, true);
+    if (allowedPatterns.some((re) => re.test(origin))) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,

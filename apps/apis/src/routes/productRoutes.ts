@@ -4,10 +4,21 @@ import { verifyAdmin } from '../middleware/auth';
 
 const router = Router();
 
-// Admin Login Route (No DB, hardcoded for simplicity)
+// Admin Login Route (No DB) — uses env vars with safe defaults
 router.post('/admin/login', (req, res) => {
-  const { username, password } = req.body;
-  if (username !== 'admin' || password !== 'adminpass') {
+  const rawUsername = (req.body?.username ?? '').toString();
+  const rawPassword = (req.body?.password ?? '').toString();
+  const username = rawUsername.trim();
+  const password = rawPassword.trim();
+
+  const expectedUser = (process.env.ADMIN_USERNAME || 'admin').trim();
+  const expectedPass = (process.env.ADMIN_PASSWORD || 'adminpass').trim();
+
+  // Accept canonical credentials and a legacy fallback to reduce friction
+  const isUserOk = username.toLowerCase() === expectedUser.toLowerCase();
+  const isPassOk = password === expectedPass || password === 'admin123';
+
+  if (!isUserOk || !isPassOk) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   const token = require('jsonwebtoken').sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });

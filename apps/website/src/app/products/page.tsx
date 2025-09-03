@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { websiteApiClient } from "@/lib/api";
 
 // Simple Product type that matches your database
 type Product = {
@@ -31,14 +32,14 @@ function ProductsContent() {
       try {
         setLoading(true);
         
-        // Simple API call to get products
-        const response = await fetch('http://localhost:4000/api/products');
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-        
-        const data = await response.json();
-        setProducts(data);
+        // Use shared API client (respects NEXT_PUBLIC_API_URL)
+        const data = await websiteApiClient.getProducts();
+        // Normalize price to number for display compatibility
+        const normalized = (data as any[]).map((p) => ({
+          ...p,
+          price: typeof p.price === 'string' ? Number(p.price) : p.price,
+        }));
+        setProducts(normalized);
       } catch (error) {
         console.error('Error fetching products:', error);
         // If API fails, show empty state
