@@ -12,13 +12,22 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 // CORS middleware - Allow requests from the admin frontend
 app.use((0, cors_1.default)({
-    origin: [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:3001',
-        'http://127.0.0.1:3001',
-        process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app'
-    ],
+    origin: (origin, callback) => {
+        const configured = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+        const allowed = new Set([
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:3001',
+            'http://127.0.0.1:3001',
+            ...configured
+        ]);
+        if (!origin || allowed.has(origin))
+            return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -46,5 +55,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`CORS enabled for: http://localhost:3000, http://localhost:3001`);
+    console.log(`CORS enabled. Allowed origins:`, process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'localhost only');
 });
