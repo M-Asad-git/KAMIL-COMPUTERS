@@ -30,6 +30,28 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Explicitly handle preflight requests with the same CORS policy
+app.options('*', cors({
+  origin: (origin, callback) => {
+    const configured = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const allowed = new Set([
+      'http://localhost:3000', 
+      'http://127.0.0.1:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001',
+      ...configured
+    ]);
+    if (!origin || allowed.has(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
 // Health check endpoint for Railway
