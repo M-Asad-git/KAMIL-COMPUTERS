@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { websiteApiClient } from "@/lib/api";
+import { Product as ApiProduct } from "@/types";
 
 // Simple Product type that matches your database
 type Product = {
@@ -33,11 +35,18 @@ function ProductsContent() {
         setLoading(true);
         
         // Use shared API client (respects NEXT_PUBLIC_API_URL)
-        const data = await websiteApiClient.getProducts();
-        // Normalize price to number for display compatibility
-        const normalized = (data as any[]).map((p) => ({
-          ...p,
+        const raw = await websiteApiClient.getProducts();
+        type ApiProductResponse = Omit<ApiProduct, 'price'> & { price: number | string; images?: string[]; stock?: number };
+        const data = raw as unknown as ApiProductResponse[];
+        // Normalize into local view model
+        const normalized: Product[] = data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          category: String(p.category),
+          description: p.description,
           price: typeof p.price === 'string' ? Number(p.price) : p.price,
+          images: p.images ?? [],
+          stock: p.stock,
         }));
         setProducts(normalized);
       } catch (error) {
@@ -139,9 +148,12 @@ function ProductsContent() {
               >
                 <div className="relative mb-4 group">
                   <div className="relative overflow-hidden rounded-lg md:rounded-xl">
-                    <img
-                      src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder-image.svg'}
+                    <Image
+                      src={(product.images && product.images.length > 0 && /^https?:\/\//.test(product.images[0])) ? product.images[0] : '/placeholder-image.svg'}
                       alt={product.name}
+                      width={800}
+                      height={600}
+                      unoptimized
                       className="w-full h-40 md:h-48 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-110"
                       onClick={() => openImageGallery(product)}
                     />
@@ -203,9 +215,12 @@ function ProductsContent() {
             </button>
             
             <div className="relative">
-              <img
-                src={selectedProduct.images && selectedProduct.images.length > 0 ? selectedProduct.images[currentImageIndex] : '/placeholder-image.svg'}
+              <Image
+                src={(selectedProduct.images && selectedProduct.images.length > 0 && /^https?:\/\//.test(selectedProduct.images[currentImageIndex])) ? selectedProduct.images[currentImageIndex] : '/placeholder-image.svg'}
                 alt={selectedProduct.name}
+                width={1200}
+                height={800}
+                unoptimized
                 className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
               />
             </div>
