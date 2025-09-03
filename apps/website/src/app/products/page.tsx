@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { websiteApiClient } from "@/lib/api";
 import { Product as ApiProduct } from "@/types";
 
@@ -21,24 +22,32 @@ const categories = ["All", "Laptops", "Desktops", "Accessories"];
 
 // Separate component that uses useSearchParams
 function ProductsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('search') ?? "";
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Fetch products from your API
+  // Debounced fetch based on local search state and selected category
   useEffect(() => {
-    const fetchProducts = async () => {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(async () => {
       try {
         setLoading(true);
         
-        // Use shared API client (respects NEXT_PUBLIC_API_URL)
-        const raw = await websiteApiClient.getProducts();
+        const params: { name?: string; category?: string } = {};
+        const trimmed = search.trim();
+        if (trimmed) params.name = trimmed;
+        if (selectedCategory !== 'All') params.category = selectedCategory;
+
+        const raw = await websiteApiClient.getProducts(Object.keys(params).length ? params : undefined);
         type ApiProductResponse = Omit<ApiProduct, 'price'> & { price: number | string; images?: string[]; stock?: number };
         const data = raw as unknown as ApiProductResponse[];
-        // Normalize into local view model
         const normalized: Product[] = data.map((p) => ({
           id: p.id,
           name: p.name,
@@ -51,22 +60,32 @@ function ProductsContent() {
         setProducts(normalized);
       } catch (error) {
         console.error('Error fetching products:', error);
-        // If API fails, show empty state
         setProducts([]);
       } finally {
         setLoading(false);
       }
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      abortController.abort();
     };
+  }, [search, selectedCategory]);
 
-    fetchProducts();
-  }, []);
+  // Update URL as user types to trigger backend search
+  const handleSearchInput = (value: string) => {
+    setSearch(value);
+    const url = value.trim() ? `/products?search=${encodeURIComponent(value.trim())}` : '/products';
+    router.replace(url);
+  };
 
-  // Simple filtering logic
+  // Simple filtering logic (search across name, description, and category)
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = search === "" || 
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.description.toLowerCase().includes(search.toLowerCase()) ||
-      product.category.toLowerCase().includes(search.toLowerCase());
+    const normalizedQuery = search.toLowerCase();
+    const matchesSearch = normalizedQuery === "" || 
+      product.name.toLowerCase().includes(normalizedQuery) ||
+      product.description.toLowerCase().includes(normalizedQuery) ||
+      product.category.toLowerCase().includes(normalizedQuery);
     
     const matchesCategory = selectedCategory === "All" || 
       product.category === selectedCategory;
@@ -118,7 +137,7 @@ function ProductsContent() {
             type="text"
             placeholder="🔍 Search products..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
             className="w-full sm:w-1/2 px-4 md:px-6 py-2 md:py-3 rounded-full border-0 bg-white/80 backdrop-blur-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg text-sm md:text-base"
           />
           <select
@@ -148,15 +167,27 @@ function ProductsContent() {
               >
                 <div className="relative mb-4 group">
                   <div className="relative overflow-hidden rounded-lg md:rounded-xl">
-                    <Image
-                      src={(product.images && product.images.length > 0 && /^https?:\/\//.test(product.images[0])) ? product.images[0] : '/placeholder-image.svg'}
-                      alt={product.name}
-                      width={800}
-                      height={600}
-                      unoptimized
-                      className="w-full h-40 md:h-48 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-110"
-                      onClick={() => openImageGallery(product)}
-                    />
+                    {/^(https?:\/\/|\/)/i.test(product.images?.[0] ?? '') ? (
+                      <Image
+                        src={product.images?.[0] ?? '/placeholder-image.svg'}
+                        alt={product.name}
+                        width={800}
+                        height={600}
+                        unoptimized
+                        className="w-full h-40 md:h-48 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-110"
+                        onClick={() => openImageGallery(product)}
+                      />
+                    ) : (
+                      <img
+                        src={product.images?.[0] ?? '/placeholder-image.svg'}
+                        alt={product.name}
+                        width={800}
+                        height={600}
+                        className="w-full h-40 md:h-48 object-cover cursor-pointer"
+                        onClick={() => openImageGallery(product)}
+                        onError={(e) => { e.currentTarget.src = '/placeholder-image.svg'; }}
+                      />
+                    )}
                     <div 
                       className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center cursor-pointer"
                       onClick={() => openImageGallery(product)}
@@ -215,14 +246,25 @@ function ProductsContent() {
             </button>
             
             <div className="relative">
-              <Image
-                src={(selectedProduct.images && selectedProduct.images.length > 0 && /^https?:\/\//.test(selectedProduct.images[currentImageIndex])) ? selectedProduct.images[currentImageIndex] : '/placeholder-image.svg'}
-                alt={selectedProduct.name}
-                width={1200}
-                height={800}
-                unoptimized
-                className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
-              />
+              {/^(https?:\/\/|\/)/i.test(selectedProduct.images?.[currentImageIndex] ?? '') ? (
+                <Image
+                  src={selectedProduct.images?.[currentImageIndex] ?? '/placeholder-image.svg'}
+                  alt={selectedProduct.name}
+                  width={1200}
+                  height={800}
+                  unoptimized
+                  className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
+                />
+              ) : (
+                <img
+                  src={selectedProduct.images?.[currentImageIndex] ?? '/placeholder-image.svg'}
+                  alt={selectedProduct.name}
+                  width={1200}
+                  height={800}
+                  className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
+                  onError={(e) => { e.currentTarget.src = '/placeholder-image.svg'; }}
+                />
+              )}
             </div>
             
             <div className="p-4 md:p-6 bg-white">

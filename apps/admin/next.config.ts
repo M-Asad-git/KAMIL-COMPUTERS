@@ -1,7 +1,24 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      // General common CDNs
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: 'img.youtube.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      // Google favicon endpoints
+      { protocol: 'https', hostname: 'www.google.com' },
+      { protocol: 'https', hostname: 't2.gstatic.com' },
+      { protocol: 'https', hostname: 's2.googleusercontent.com' },
+      { protocol: 'https', hostname: 's2.googleusercontent.com' },
+      // GitHub avatars (if needed)
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      // Generic catch-all for most CDNs you might paste
+      { protocol: 'https', hostname: '**' },
+    ],
+  },
 };
 
 export default nextConfig;

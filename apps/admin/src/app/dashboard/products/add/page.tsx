@@ -25,6 +25,30 @@ export default function AddProductPage() {
   
   const router = useRouter();
 
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    try {
+      const dataUrls = await Promise.all(Array.from(files).map(fileToDataUrl));
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...dataUrls.filter(url => !prev.images.includes(url))]
+      }));
+      e.target.value = '';
+    } catch (err) {
+      setError('Failed to read selected file(s).');
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -51,10 +75,12 @@ export default function AddProductPage() {
   };
 
   const addImage = () => {
-    if (newImageUrl.trim() && !formData.images.includes(newImageUrl.trim())) {
+    const trimmedUrl = newImageUrl.trim();
+    if (!trimmedUrl) return;
+    if (!formData.images.includes(trimmedUrl)) {
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, newImageUrl.trim()]
+        images: [...prev.images, trimmedUrl]
       }));
       setNewImageUrl('');
     }
@@ -259,10 +285,10 @@ export default function AddProductPage() {
                   <div className="space-y-3">
                     <div className="flex space-x-2">
                       <input
-                        type="url"
+                        type="text"
                         value={newImageUrl}
                         onChange={(e) => setNewImageUrl(e.target.value)}
-                        placeholder="Enter image URL"
+                        placeholder="Enter image URL or data URL"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                       <button
@@ -273,22 +299,46 @@ export default function AddProductPage() {
                         <Plus className="h-4 w-4" />
                       </button>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      />
+                    </div>
                     
                     {formData.images.length > 0 && (
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                         {formData.images.map((image, index) => (
                           <div key={index} className="relative group">
-                            <Image
-                              src={image}
-                              alt={`Product image ${index + 1}`}
-                              width={96}
-                              height={96}
-                              className="w-full h-24 object-cover rounded-lg border border-gray-200"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMCAzMEg3MFY3MFYzMFYzMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTM1IDM1VjY1SDY1VjM1SDM1WiIgZmlsbD0iI0Y5RkFGRiIvPgo8L3N2Zz4K';
-                              }}
-                            />
+                            {/^(https?:\/\/|\/)/i.test(image) ? (
+                              <Image
+                                src={image}
+                                alt={`Product image ${index + 1}`}
+                                width={96}
+                                height={96}
+                                className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                                unoptimized
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = '/placeholder-image.svg';
+                                }}
+                              />
+                            ) : (
+                              <img
+                                src={image}
+                                alt={`Product image ${index + 1}`}
+                                width={96}
+                                height={96}
+                                className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  target.src = '/placeholder-image.svg';
+                                }}
+                              />
+                            )}
                             <button
                               type="button"
                               onClick={() => removeImage(index)}

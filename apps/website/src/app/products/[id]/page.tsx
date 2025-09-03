@@ -143,17 +143,27 @@ export default function ProductDetails() {
             {/* Product Images */}
             <div className="space-y-4">
               <div className="relative group">
-                <Image
-                  src={(product.images && product.images.length > 0 && /^https?:\/\//.test(product.images[currentImageIndex])) 
-                    ? product.images[currentImageIndex] 
-                    : '/placeholder-image.svg'}
-                  alt={product.name}
-                  width={800}
-                  height={600}
-                  unoptimized
-                  className="w-full h-64 md:h-96 object-cover rounded-xl shadow-lg cursor-pointer transition-transform duration-300 group-hover:scale-105"
-                  onClick={openImageModal}
-                />
+                {/^(https?:\/\/|\/)/i.test(product.images?.[currentImageIndex] ?? '') ? (
+                  <Image
+                    src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                    alt={product.name}
+                    width={800}
+                    height={600}
+                    unoptimized
+                    className="w-full h-64 md:h-96 object-cover rounded-xl shadow-lg cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                    onClick={openImageModal}
+                  />
+                ) : (
+                  <img
+                    src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                    alt={product.name}
+                    width={800}
+                    height={600}
+                    className="w-full h-64 md:h-96 object-cover rounded-xl shadow-lg cursor-pointer"
+                    onClick={openImageModal}
+                    onError={(e) => { e.currentTarget.src = '/placeholder-image.svg'; }}
+                  />
+                )}
                 
                 {/* Click to view gallery overlay */}
                 <div 
@@ -206,14 +216,25 @@ export default function ProductDetails() {
                           : 'border-gray-200 hover:border-blue-300'
                       }`}
                     >
-                      <Image
-                        src={/^https?:\/\//.test(image) ? image : '/placeholder-image.svg'}
-                        alt={`${product.name} ${index + 1}`}
-                        width={160}
-                        height={120}
-                        unoptimized
-                        className="w-16 h-12 md:w-20 md:h-16 object-cover"
-                      />
+                      {/^(https?:\/\/|\/)/i.test(image) ? (
+                        <Image
+                          src={image}
+                          alt={`${product.name} ${index + 1}`}
+                          width={160}
+                          height={120}
+                          unoptimized
+                          className="w-16 h-12 md:w-20 md:h-16 object-cover"
+                        />
+                      ) : (
+                        <img
+                          src={image}
+                          alt={`${product.name} ${index + 1}`}
+                          width={160}
+                          height={120}
+                          className="w-16 h-12 md:w-20 md:h-16 object-cover"
+                          onError={(e) => { e.currentTarget.src = '/placeholder-image.svg'; }}
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -306,16 +327,25 @@ export default function ProductDetails() {
             </button>
             
             <div className="relative">
-              <Image
-                src={(product.images && product.images.length > 0 && /^https?:\/\//.test(product.images[currentImageIndex])) 
-                  ? product.images[currentImageIndex] 
-                  : '/placeholder-image.svg'}
-                alt={product.name}
-                width={1200}
-                height={800}
-                unoptimized
-                className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
-              />
+              {/^(https?:\/\/|\/)/i.test(product.images?.[currentImageIndex] ?? '') ? (
+                <Image
+                  src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                  alt={product.name}
+                  width={1200}
+                  height={800}
+                  unoptimized
+                  className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
+                />
+              ) : (
+                <img
+                  src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                  alt={product.name}
+                  width={1200}
+                  height={800}
+                  className="w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] object-contain bg-gray-100"
+                  onError={(e) => { e.currentTarget.src = '/placeholder-image.svg'; }}
+                />
+              )}
               
               {/* Navigation arrows */}
               {product.images && product.images.length > 1 && (

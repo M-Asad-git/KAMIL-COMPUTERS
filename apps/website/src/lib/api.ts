@@ -1,7 +1,22 @@
 import { Product } from '@/types';
 
 // Default to deployed API so production works even if env var missing
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kamil-apis.vercel.app/api';
+// Also normalize to ensure the base URL always includes "/api"
+function normalizeApiBaseUrl(rawBaseUrl?: string): string {
+  const fallback = 'https://kamil-apis.vercel.app/api';
+  const candidate = (rawBaseUrl && rawBaseUrl.trim()) ? rawBaseUrl.trim() : fallback;
+
+  // Remove trailing slashes to make checks easier
+  const withoutTrailing = candidate.replace(/\/+$/, '');
+
+  // If it already ends with /api (case-insensitive), keep it; otherwise, append /api
+  if (/\/api$/i.test(withoutTrailing)) {
+    return withoutTrailing;
+  }
+  return `${withoutTrailing}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 
 class WebsiteApiClient {
   private async request<T>(
