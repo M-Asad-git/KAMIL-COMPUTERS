@@ -12,12 +12,26 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 // CORS middleware - Allow requests from the admin frontend
 app.use((0, cors_1.default)({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
+        process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(body_parser_1.default.json());
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
 // Routes
 app.use('/api', productRoutes_1.default);
 // 404 Middleware for unmatched routes
@@ -32,5 +46,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`CORS enabled for: http://localhost:3000`);
+    console.log(`CORS enabled for: http://localhost:3000, http://localhost:3001`);
 });
