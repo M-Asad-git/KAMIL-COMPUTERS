@@ -26,7 +26,7 @@ export default function SettingsPage() {
                   <label className="block text-sm font-medium text-gray-700">API Base URL</label>
                   <input
                     type="text"
-                    value="http://localhost:4000/api"
+                    value={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}
                     disabled
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 sm:text-sm"
                   />

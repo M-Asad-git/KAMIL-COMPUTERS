@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node dist/server.js",
-    "build": "node node_modules/prisma/build/index.js generate && tsc",
-    "dev": "node node_modules/prisma/build/index.js generate && ts-node-dev --respawn src/server.ts",
-    "prisma:generate": "node node_modules/prisma/build/index.js generate",
-    "prisma:migrate": "prisma migrate deploy"
+    "build": "prisma generate && tsc",
+    "dev": "prisma generate && ts-node-dev --respawn src/server.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "vercel-build": "prisma generate && tsc"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
