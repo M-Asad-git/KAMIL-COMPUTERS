@@ -6,6 +6,7 @@ import Link from "next/link";
 import { websiteApiClient } from "@/lib/api";
 import Image from "next/image";
 import { Product as ApiProduct } from "@/types";
+import { getImageUrl } from "@/lib/imageUtils";
 
 // Simple Product type that matches your database
 type Product = {
@@ -145,7 +146,7 @@ export default function ProductDetails() {
               <div className="relative group">
                 {/^(https?:\/\/|\/)/i.test(product.images?.[currentImageIndex] ?? '') ? (
                   <Image
-                    src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                    src={getImageUrl(product.images?.[currentImageIndex] ?? '/placeholder-image.svg')} 
                     alt={product.name}
                     width={800}
                     height={600}
@@ -155,7 +156,7 @@ export default function ProductDetails() {
                   />
                 ) : (
                   <img
-                    src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                    src={getImageUrl(product.images?.[currentImageIndex] ?? '/placeholder-image.svg')} 
                     alt={product.name}
                     width={800}
                     height={600}
@@ -218,7 +219,7 @@ export default function ProductDetails() {
                     >
                       {/^(https?:\/\/|\/)/i.test(image) ? (
                         <Image
-                          src={image}
+                          src={getImageUrl(image)}
                           alt={`${product.name} ${index + 1}`}
                           width={160}
                           height={120}
@@ -227,7 +228,7 @@ export default function ProductDetails() {
                         />
                       ) : (
                         <img
-                          src={image}
+                          src={getImageUrl(image)}
                           alt={`${product.name} ${index + 1}`}
                           width={160}
                           height={120}
@@ -329,7 +330,7 @@ export default function ProductDetails() {
             <div className="relative">
               {/^(https?:\/\/|\/)/i.test(product.images?.[currentImageIndex] ?? '') ? (
                 <Image
-                  src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                  src={getImageUrl(product.images?.[currentImageIndex] ?? '/placeholder-image.svg')} 
                   alt={product.name}
                   width={1200}
                   height={800}
@@ -338,7 +339,7 @@ export default function ProductDetails() {
                 />
               ) : (
                 <img
-                  src={product.images?.[currentImageIndex] ?? '/placeholder-image.svg'} 
+                  src={getImageUrl(product.images?.[currentImageIndex] ?? '/placeholder-image.svg')} 
                   alt={product.name}
                   width={1200}
                   height={800}

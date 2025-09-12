@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { websiteApiClient } from "@/lib/api";
 import { Product as ApiProduct } from "@/types";
+import { getImageUrl } from "@/lib/imageUtils";
 
 // Simple Product type that matches your database
 type Product = {
@@ -169,7 +170,7 @@ function ProductsContent() {
                   <div className="relative overflow-hidden rounded-lg md:rounded-xl">
                     {/^(https?:\/\/|\/)/i.test(product.images?.[0] ?? '') ? (
                       <Image
-                        src={product.images?.[0] ?? '/placeholder-image.svg'}
+                        src={getImageUrl(product.images?.[0] ?? '/placeholder-image.svg')}
                         alt={product.name}
                         width={800}
                         height={600}
@@ -179,7 +180,7 @@ function ProductsContent() {
                       />
                     ) : (
                       <img
-                        src={product.images?.[0] ?? '/placeholder-image.svg'}
+                        src={getImageUrl(product.images?.[0] ?? '/placeholder-image.svg')}
                         alt={product.name}
                         width={800}
                         height={600}
@@ -248,7 +249,7 @@ function ProductsContent() {
             <div className="relative">
               {/^(https?:\/\/|\/)/i.test(selectedProduct.images?.[currentImageIndex] ?? '') ? (
                 <Image
-                  src={selectedProduct.images?.[currentImageIndex] ?? '/placeholder-image.svg'}
+                  src={getImageUrl(selectedProduct.images?.[currentImageIndex] ?? '/placeholder-image.svg')}
                   alt={selectedProduct.name}
                   width={1200}
                   height={800}
@@ -257,7 +258,7 @@ function ProductsContent() {
                 />
               ) : (
                 <img
-                  src={selectedProduct.images?.[currentImageIndex] ?? '/placeholder-image.svg'}
+                  src={getImageUrl(selectedProduct.images?.[currentImageIndex] ?? '/placeholder-image.svg')}
                   alt={selectedProduct.name}
                   width={1200}
                   height={800}

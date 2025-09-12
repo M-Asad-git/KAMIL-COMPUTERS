@@ -15,7 +15,7 @@ const addProduct = async (req, res) => {
                 category,
                 description,
                 price,
-                images: images || [],
+                images: images ? JSON.stringify(images) : null,
                 stock: stock !== null && stock !== void 0 ? stock : 0,
             },
         });
@@ -54,8 +54,8 @@ const updateProduct = async (req, res) => {
         if (price)
             data.price = price;
         if (images)
-            data.images = images;
-        if (stock)
+            data.images = JSON.stringify(images);
+        if (stock !== undefined)
             data.stock = stock;
         if (Object.keys(data).length === 0) {
             return res.status(400).json({ error: 'No fields to update' });

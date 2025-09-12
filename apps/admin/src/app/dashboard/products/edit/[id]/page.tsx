@@ -7,6 +7,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { apiClient } from '@/lib/api';
 import { Category } from '@/types';
+import { getImageUrl } from '@/lib/imageUtils';
 import { ArrowLeft, Save, Plus, X, Trash2 } from 'lucide-react';
 
 export default function EditProductPage() {
@@ -28,27 +29,24 @@ export default function EditProductPage() {
   const params = useParams();
   const productId = params.id as string;
 
-  const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    setIsLoading(true);
     try {
-      const dataUrls = await Promise.all(Array.from(files).map(fileToDataUrl));
+      const { uploadMultipleImages } = await import('@/lib/upload');
+      const imageUrls = await uploadMultipleImages(Array.from(files));
+      
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, ...dataUrls.filter(url => !prev.images.includes(url))]
+        images: [...prev.images, ...imageUrls.filter(url => !prev.images.includes(url))]
       }));
       e.target.value = '';
     } catch (err) {
-      setError('Failed to read selected file(s).');
+      setError('Failed to upload selected file(s).');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -365,7 +363,7 @@ export default function EditProductPage() {
                           <div key={index} className="relative group">
                             {/^(https?:\/\/|\/)/i.test(image) ? (
                               <Image
-                                src={image}
+                                src={getImageUrl(image)}
                                 alt={`Product image ${index + 1}`}
                                 width={96}
                                 height={96}
@@ -377,7 +375,7 @@ export default function EditProductPage() {
                               />
                             ) : (
                               <img
-                                src={image}
+                                src={getImageUrl(image)}
                                 alt={`Product image ${index + 1}`}
                                 width={96}
                                 height={96}

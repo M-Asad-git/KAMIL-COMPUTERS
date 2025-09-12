@@ -2,7 +2,9 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
 import productRoutes from './routes/productRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 dotenv.config();
 
@@ -76,7 +78,11 @@ app.options('*', cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check endpoint for Railway
 app.get('/health', (req: Request, res: Response) => {
@@ -89,6 +95,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // Routes
 app.use('/api', productRoutes);
+app.use('/api', uploadRoutes);
 
 // 404 Middleware for unmatched routes
 app.use((req: Request, res: Response, next: NextFunction) => {

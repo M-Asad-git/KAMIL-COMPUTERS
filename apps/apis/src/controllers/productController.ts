@@ -14,10 +14,10 @@ export const addProduct = async (req: Request, res: Response) => {
       data: {
         id: require('crypto').randomUUID(),
         name,
-        category,
+        category: category as Category,
         description,
-        price,
-        images: images || [],
+        price: price,
+        images: (images as any) || null,
         stock: stock ?? 0,
       },
     });
@@ -30,31 +30,51 @@ export const addProduct = async (req: Request, res: Response) => {
 export const getProductById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const product = await prisma.product.findUnique({ where: { id } });
-    if (!product) { return res.status(404).json({ error: 'Product not found' }); }
+    // Retry logic for database connection issues
+    let retries = 3;
+    let product;
+
+    while (retries > 0) {
+      try {
+        product = await prisma.product.findUnique({ where: { id } });
+        break;
+      } catch (dbError: any) {
+        retries--;
+        if (retries === 0) throw dbError;
+
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log(`Database retry attempt, ${retries} attempts remaining`);
+      }
+    }
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
     res.json(product);
   } catch (error) {
+    console.error('Database error in getProductById:', error);
     res.status(500).json({ error: 'Database error', details: (error as Error).message });
   }
 };
 
 export const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, category, description, price, images,stock }: Partial<Product> = req.body;
+  const { name, category, description, price, images, stock }: Partial<Product> = req.body;
 
   try {
-    const data: Partial<Product> = {};
+    const data: any = {};
     if (name) data.name = name;
-    if (category) data.category = category;
+    if (category) data.category = category as Category;
     if (description) data.description = description;
     if (price) data.price = price;
-    if (images) data.images = images;
-    if (stock) data.stock = stock;
+    if (images !== undefined) data.images = (images as any) || null;
+    if (stock !== undefined) data.stock = stock;
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
 
-    const product = await prisma.product.update({
+    await prisma.product.update({
       where: { id },
       data,
     });
@@ -96,14 +116,14 @@ export const searchProductsByCategory = async (req: Request, res: Response) => {
 
   try {
     let whereClause: any = {};
-    
+
     // Enhanced search logic
     if (category && category !== 'All') {
       // Handle category search with smart matching
       const categoryLower = (category as string).toLowerCase();
-      
+
       // Map common search terms to actual categories
-      const categoryMap: { [key: string]: string[] } = {
+      const categoryMap: { [key: string]: Category[] } = {
         'laptop': ['Laptops'],
         'laptops': ['Laptops'],
         'notebook': ['Laptops'],
@@ -131,10 +151,10 @@ export const searchProductsByCategory = async (req: Request, res: Response) => {
         'home': ['Laptops', 'Desktops', 'Accessories'],
         'office': ['Laptops', 'Desktops', 'Accessories']
       };
-      
+
       // Check if search term maps to specific categories
-      const mappedCategories = categoryMap[categoryLower] || [category as string];
-      
+      const mappedCategories = categoryMap[categoryLower] || [category as Category];
+
       if (mappedCategories.length > 1) {
         // Multiple categories - use OR condition
         whereClause.OR = mappedCategories.map(cat => ({ category: cat }));
@@ -142,11 +162,11 @@ export const searchProductsByCategory = async (req: Request, res: Response) => {
         whereClause.category = mappedCategories[0];
       }
     }
-    
+
     // Handle name search with partial matching
     if (name && (name as string).trim()) {
       const searchTerm = (name as string).trim();
-      
+
       // Create OR conditions for comprehensive search
       const nameSearchConditions = [
         // Exact name match (highest priority)
@@ -160,7 +180,7 @@ export const searchProductsByCategory = async (req: Request, res: Response) => {
         // Ends with search term
         { name: { endsWith: searchTerm, mode: 'insensitive' } }
       ];
-      
+
       // If we also have category filter, combine them
       if (whereClause.category || whereClause.OR) {
         const categoryFilter = whereClause.category || whereClause.OR;
@@ -174,12 +194,12 @@ export const searchProductsByCategory = async (req: Request, res: Response) => {
         whereClause.OR = nameSearchConditions;
       }
     }
-    
+
     // If no search criteria, return all products
     if (Object.keys(whereClause).length === 0) {
       whereClause = {};
     }
-    
+
     const products = await prisma.product.findMany({
       where: whereClause,
       orderBy: [
@@ -190,7 +210,7 @@ export const searchProductsByCategory = async (req: Request, res: Response) => {
       take: parseInt(limit),
       skip: parseInt(skip)
     });
-    
+
     res.json(products);
   } catch (error) {
     console.error('Search error:', error);

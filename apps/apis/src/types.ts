@@ -2,10 +2,10 @@ export type Category = 'Laptops' | 'Desktops' | 'Accessories';
 
 export interface Product {
   name: string;
-  category: Category;
+  category: Category; // Using Category enum for PostgreSQL
   description: string;
   price: number;
-  images?: string[];
+  images?: string[]; // Keep as array in interface, we'll serialize in controller
   stock?: number;
 }
 
