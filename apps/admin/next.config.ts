@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  basePath: '/KAMIL-COMPUTERS/admin',
+  assetPrefix: '/KAMIL-COMPUTERS/admin/',
   images: {
+    unoptimized: true,
     remotePatterns: [
       // General common CDNs
       { protocol: 'https', hostname: 'images.unsplash.com' },
